@@ -5,16 +5,19 @@ from random import uniform				# random float between a and b: uniform(a,b)
 from thread import start_new_thread		# new thread, usefull for a changesfeed listener
 
 class Skeleton:
-	def __init__(self, server = 'http://localhost:5984', database = 'datagen'): 
+	def __init__(self, server = 'http://localhost:5984', database = 'datagenerator'): 
 		self.Server = couchdb.Server(server)
 		# for validation: 
-		# self.Server.resource.credentials=("datagenerator","12345678")
-		try:
-			self.db = self.Server[database]
-		except couchdb.ResourceNotFound:
-			self.db = self.Server.create(database)
-			print('new database created: '+database)
-			
+		self.deviceID = 'datagenerator'
+		self.password = '12345678'
+		self.Server.resource.credentials=(self.deviceID,self.password)
+#		try:
+#			self.db = self.Server[database]
+#		except couchdb.ResourceNotFound:
+#			self.db = self.Server.create(database)
+#			print('new database created: '+database)
+
+		self.db = self.Server[database]
 		self.ParDoc = []
 		
 		newest = self.db.changes()['last_seq']
@@ -25,7 +28,7 @@ class Skeleton:
 		# bykey is for a list of available devices
 		# bytime is usefull for plotting
 		# the Parameter filter shows only docs with the _id = Parameter to the changesfeed
-		# the following is written with a CouchApp and then copied from Futon, excuse the impossible readability	
+		# the following is written with a CouchApp and then copied from Futon, excuse the impossible readability
 		try:
 			designdoc = self.db['_design/Skeleton']
 		except couchdb.ResourceNotFound:
@@ -42,6 +45,17 @@ class Skeleton:
 		designdoc['filters'] = {"parameter" : "function(doc, req) {if(doc._deleted == true) {return false;} if(doc._id == 'Parameter') {return true;} return false;}"}
 		self.db.save(designdoc)
 		print('view and filter created')
+		
+		# create a validation document, which only allows this device and admins to change database
+		try:
+			valdoc =self.db['_design/auth']
+		except couchdb.ResourceNotFound:
+			valdoc = {"_id" : "_design/auth"}
+			print('new validation doc created')
+		
+		valdoc['language'] = 'javascript'
+		valdoc["validate_doc_update"] = "function(newDoc, oldDoc, userCtx) {   if (userCtx.roles.indexOf('_admin') !== -1 || userCtx.name == '"+self.deviceID+"' ) {     return true;   } else { throw({forbidden: 'Only admins may edit the database'});   } }"
+		self.db.save(valdoc)
 		
 	def startUp(self):
 	## Checks if there is already a Parameter Doc, if not it creates one
