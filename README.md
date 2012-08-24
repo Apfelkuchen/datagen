@@ -3,8 +3,8 @@ This script generates either random data or data using the functions (sin,cos or
 
 # validation
 
-the validate.py script must be run before the datagenerator is started, when the CouchDB has a server admin
+When the CouchDB has a server admin, the validate.py script has to be executed before the datagenerator is started.
 
-it creates with admin rights a new user, the device and creates a database for it, in which the device is a db_admin (has rights to change design documents)
+With admin user inputs, it creates a new user: the device and creates a database for it, in which the device is a db_admin (has rights to change design documents)
 
-the datagenerator then creates a _design/auth document in which it allows only to admins and his self to add or change documents
+The datagenerator then creates a _design/auth document in which it allows only admins and hisself to add or change documents
