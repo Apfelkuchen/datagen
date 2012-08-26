@@ -131,6 +131,7 @@ class Skeleton:
 		start_new_thread(self.ChangesFeed,()) # uses a simultanous thread for listening to the changesfeed
 		while True:
 			newdoc = {'mode': 'on'}
+			newdoc['time']= time.time()
 			for types in self.ParDoc:
 				if (type(self.ParDoc[types])!=str):
 					newdoc[types] = {}
@@ -150,8 +151,7 @@ class Skeleton:
 								self.db.save(self.ParDoc)
 							newdoc[types][i]['amplitude'] = namp
 							newdoc[types][i]['frequency'] = nfreq
-							newdoc[types][i]['time']= time.time()
-							newdoc[types][i]['data']= namp*self.Functions(nfun,nfreq*newdoc[types][i]['time'])
+							newdoc[types][i]['data']= namp*self.Functions(nfun,nfreq*newdoc['time'])
 								
 						if (nfun == 'random'):
 							try: 
@@ -165,11 +165,10 @@ class Skeleton:
 								self.db.save(self.ParDoc)
 							newdoc[types][i]['mean'] = nmean
 							newdoc[types][i]['spread'] = nspread
-							newdoc[types][i]['time']= time.time()
 							newdoc[types][i]['data']= uniform(-nspread/2,nspread/2)+nmean
 			self.db.save(newdoc)
 			print 'Newdoc created'
-			# time.sleep(1)     # to change the update frequency
+			time.sleep(1)     # to change the update frequency
 	
 	def Functions(self, function = 'sin', x=1):
 		## some functions for creating data
