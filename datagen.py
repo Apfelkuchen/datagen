@@ -28,7 +28,7 @@ class Skeleton:
 		# bykey is for a list of available devices
 		# bytime is usefull for plotting
 		# the Parameter filter shows only docs with the _id = Parameter to the changesfeed
-		# the following is written with a CouchApp and then copied from Futon, excuse the impossible readability
+		# the following is written with a CouchApp and then copied from Futon, excuse the impossible readability, a more lucid version for couchapps is in the folder views
 		try:
 			designdoc = self.db['_design/Skeleton']
 		except couchdb.ResourceNotFound:
