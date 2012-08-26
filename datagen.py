@@ -5,17 +5,17 @@ from random import uniform				# random float between a and b: uniform(a,b)
 from thread import start_new_thread		# new thread, usefull for a changesfeed listener
 
 class Skeleton:
-	def __init__(self, server = 'http://localhost:5984', database = 'datagenerator'): 
+	def __init__(self, server = 'http://localhost:5984', database = 'datagen3'): 
 		self.Server = couchdb.Server(server)
 		# for validation: 
-		self.deviceID = 'datagenerator'
-		self.password = '12345678'
-		self.Server.resource.credentials=(self.deviceID,self.password)
-#		try:
-#			self.db = self.Server[database]
-#		except couchdb.ResourceNotFound:
-#			self.db = self.Server.create(database)
-#			print('new database created: '+database)
+		#self.deviceID = 'datagenerator'
+		#self.password = '12345678'
+		#self.Server.resource.credentials=(self.deviceID,self.password)
+		try:
+			self.db = self.Server[database]
+		except couchdb.ResourceNotFound:
+			self.db = self.Server.create(database)
+			print('new database created: '+database)
 
 		self.db = self.Server[database]
 		self.ParDoc = []
@@ -35,9 +35,10 @@ class Skeleton:
 			designdoc = {"_id" : "_design/Skeleton"}
 			print('new designdoc created')
 
-			designdoc['views'] = { "bykey": {"map": "function(doc) {\n\tfor(var i in doc) {\n\t\tfor(var j in doc[i]) {\n\t\t\tif(doc[i][j].time) {\n\t\t\t\tfor(var key in doc[i][j]) {\n\t\t\t\t\tvar k = key.replace('#','');\n\t\t\t\t    \tk = k.replace('.','');\n\t\t\t\t    \tk = k.replace(',',' ');\n\t\t\t\t\t\tk = k.replace(/^\\\\s+|\\\\s+$/g, '');\n\t\t\t\t\temit([i,j,k], doc[i][j][key]);\n}}}}}",\
-		       "reduce": "function(keys, values, rereduce) {\n  if (rereduce) {\n    return sum(values);\n  } else {\n    return values.length;\n  }\n}"\
-		   		},\
+			designdoc['views'] = {    "bykey": {
+       "map": "function(doc) {\n\tfor(var i in doc) {\n\t\tif (typeof(doc[i])==\"object\") {\n\t\t\tfor(var j in doc[i]) {\n\t\t\t\temit([i,j], null);\n}}}}",
+       "reduce": "function(keys, values, rereduce) {\n  if (rereduce) {\n    return sum(values);\n  } else {\n    return values.length;\n  }\n}"
+   			},\
 		   "bytime": {
        "map": "function(doc) {\n\tif (doc['time']) {\n\tfor(var i in doc) {\n\t\tif (typeof(doc[i]) == \"object\") {\n\t\t\tvar theTime = new Date(doc['time']*1000);\n\t\t\tvar year = theTime.getFullYear();\n\t\t\tvar month = theTime.getMonth();\n\t\t\tvar daym = theTime.getDate();\n\t\t\tvar hours = theTime.getHours();\n\t\t\tvar minutes = theTime.getMinutes();\n\t\t\tvar seconds = theTime.getSeconds();\n\t\t\tvar milliseconds = theTime.getMilliseconds();\n\t\t\tfor(var devicename in doc[i]) {\n\t\t\t\temit([i,devicename,year,month,daym,hours,minutes,seconds,milliseconds], doc[i][devicename]['data']);\n}}}}}",
        "reduce": "function(keys, values, rereduce) {\n\tvar tot = 0;\n\tvar count = 0;\n\tif (rereduce) {\n\t\tfor (var idx in values) {\n\t\t\ttot += values[idx].tot;\n\t\t\tcount += values[idx].count;\n\t\t\t}\n\t\t}\n\telse {\n\t \ttot = sum(values);\n\t\tcount = values.length;\n\t\t\n\t}\n\treturn {tot:tot, count:count, avg:tot/count};\n}"
@@ -48,15 +49,15 @@ class Skeleton:
 		print('view and filter created')
 		
 		# create a validation document, which only allows this device and admins to change database
-		try:
-			valdoc =self.db['_design/auth']
-		except couchdb.ResourceNotFound:
-			valdoc = {"_id" : "_design/auth"}
-			print('new validation doc created')
-		
-		valdoc['language'] = 'javascript'
-		valdoc["validate_doc_update"] = "function(newDoc, oldDoc, userCtx) {   if (userCtx.roles.indexOf('_admin') !== -1 || userCtx.name == '"+self.deviceID+"' ) {     return true;   } else { throw({forbidden: 'Only admins may edit the database'});   } }"
-		self.db.save(valdoc)
+#		try:
+#			valdoc =self.db['_design/auth']
+#		except couchdb.ResourceNotFound:
+#			valdoc = {"_id" : "_design/auth"}
+#			print('new validation doc created')
+#		
+#		valdoc['language'] = 'javascript'
+#		valdoc["validate_doc_update"] = "function(newDoc, oldDoc, userCtx) {   if (userCtx.roles.indexOf('_admin') !== -1 || userCtx.name == '"+self.deviceID+"' ) {     return true;   } else { throw({forbidden: 'Only admins may edit the database'});   } }"
+#		self.db.save(valdoc)
 		
 	def startUp(self):
 	## Checks if there is already a Parameter Doc, if not it creates one
