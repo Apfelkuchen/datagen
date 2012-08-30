@@ -9,4 +9,4 @@ With admin user inputs, it creates a new user: the device and creates a database
 
 The datagenerator then creates a _design/auth document in which it allows only admins and hisself to add or change documents
 
-# a more lucid version of the view used in the script is in the folder views
+a more lucid version of the view used in the script is in the folder views

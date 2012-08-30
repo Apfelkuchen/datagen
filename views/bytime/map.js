@@ -1,8 +1,9 @@
 function(doc) {
+	var UTCOffset = (new Date).getTimezoneOffset()*60;
 	if (doc['time']) {
 	for(var i in doc) {
 		if (typeof(doc[i]) == "object") {
-			var theTime = new Date(doc['time']*1000);
+			var theTime = new Date((doc['time']+UTCOffset)*1000);
 			var year = theTime.getFullYear();
 			var month = theTime.getMonth();
 			var daym = theTime.getDate();
@@ -11,5 +12,5 @@ function(doc) {
 			var seconds = theTime.getSeconds();
 			var milliseconds = theTime.getMilliseconds();
 			for(var devicename in doc[i]) {
-				emit([i,devicename,year,month,daym,hours,minutes,seconds,milliseconds], doc[i][devicename]['value']);
+				emit([i,devicename,year,month,daym,hours,minutes,seconds,milliseconds], doc[i][devicename]['data']);
 }}}}}

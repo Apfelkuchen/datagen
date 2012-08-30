@@ -5,7 +5,7 @@ from random import uniform				# random float between a and b: uniform(a,b)
 from thread import start_new_thread		# new thread, usefull for a changesfeed listener
 
 class Skeleton:
-	def __init__(self, server = 'http://localhost:5984', database = 'datagen7'): 
+	def __init__(self, server = 'http://localhost:5984', database = 'datagenyear'): 
 		self.Server = couchdb.Server(server)
 		# for validation: 
 		#self.deviceID = 'datagenerator'
@@ -131,9 +131,12 @@ class Skeleton:
 		self.createView()
 		self.startUp()
 		start_new_thread(self.ChangesFeed,()) # uses a simultanous thread for listening to the changesfeed
-		while True:
+		endtime = time.time()
+		currenttime = endtime  - 250*24*3600
+		while currenttime < endtime:
 			newdoc = {'mode': 'on'}
-			newdoc['time']= time.time()
+			newdoc['time']= currenttime
+			currenttime += 1
 			for types in self.ParDoc:
 				if (type(self.ParDoc[types])!=str):
 					newdoc[types] = {}
@@ -170,7 +173,7 @@ class Skeleton:
 							newdoc[types][i]['data']= uniform(-nspread/2,nspread/2)+nmean
 			self.db.save(newdoc)
 			print 'Newdoc created'
-			time.sleep(1)     # to change the update frequency
+			#time.sleep(1)     # to change the update frequency
 	
 	def Functions(self, function = 'sin', x=1):
 		## some functions for creating data
@@ -187,8 +190,7 @@ class Skeleton:
 		else:
 			return 'Not supported function'
 
-#test = Skeleton('http://datacontrol.iriscouch.com:5984','datagenerator')
-test=Skeleton()
+test = Skeleton()
 test.DataGen()
 		
 	
