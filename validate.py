@@ -29,19 +29,33 @@ except couchdb.ResourceNotFound:
 
 try:
 	db = Server[deviceID]
+	print('Database already exists')
+
 except couchdb.ResourceNotFound:
 	db = Server.create(deviceID)
-	
-	try:
-		secdoc = db['_security']
-		secdoc["_id"] = '_security'
-		secdoc['admins'] = { "names" : [deviceID], "roles" : ["_admin"]}
-		secdoc['members'] = { "names" : [], "roles" :  []}
-		db.save(secdoc)
-	except KeyError:
-		pass
 	print('new database created: '+deviceID)
 
+# create security, only admins and the deviceID user may edit design documents and other security documents
+try:
+	secdoc = db['_security']
+	secdoc["_id"] = '_security'
+	secdoc['admins'] = { "names" : [deviceID], "roles" : ["_admin"]}
+	secdoc['members'] = { "names" : [], "roles" :  []}
+	db.save(secdoc)
+except KeyError:
+	pass
+
+# create or edit the authentication doc, that only admins and the deviceID user can create new and edit documents
+try:
+	authdoc = db['_design/auth']
+	print('validation doc found')
+except KeyError:
+	authdoc = { "_id" : "_design/auth"}
+	print('validation doc created')
+	
+authdoc['language'] = 'javascript'
+authdoc["validate_doc_update"] = "function(newDoc, oldDoc, userCtx) {   if (userCtx.roles.indexOf('_admin') !== -1 || userCtx.name == '"+deviceID+"' ) {     return true;   } else { throw({forbidden: 'Only admins may edit the database'});   } }"
+db.save(authdoc)
 	
 
 
